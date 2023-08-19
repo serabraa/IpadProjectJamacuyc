@@ -1,6 +1,22 @@
 import SwiftUI
 import PlaygroundSupport
 
+class WatchFavorites: ObservableObject {
+    @Published var favorites: Set<UUID> = []
+    
+    func toggleFavorite(_ watch: Watch) {
+        if favorites.contains(watch.id) {
+            favorites.remove(watch.id)
+        } else {
+            favorites.insert(watch.id)
+        }
+    }
+    
+    func isFavorite(_ watch: Watch) -> Bool {
+        return favorites.contains(watch.id)
+    }
+}
+
 struct Watch: Identifiable {
     let id = UUID()
     let imageName: String?
@@ -18,8 +34,8 @@ let watches: [Watch] = [
 ]
 
 struct WatchCell: View {
+    @ObservedObject var favorites: WatchFavorites
     let watch: Watch
-    @State private var isFavorite = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -28,10 +44,10 @@ struct WatchCell: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100) // Set a fixed size for images
+                    .frame(width: 100, height: 100)
             } else {
                 Color.clear
-                    .frame(width: 100, height: 100) // Set the same fixed size for empty boxes
+                    .frame(width: 100, height: 100)
             }
             
             Text(watch.name)
@@ -43,45 +59,43 @@ struct WatchCell: View {
             
             Text("$\(watch.price, specifier: "%.2f")")
                 .font(.subheadline)
+            
             Button(action: {
-                isFavorite.toggle() // Toggle the favorite state
+                favorites.toggleFavorite(watch)
             }) {
-                Image(systemName: isFavorite ? "heart.fill" : "heart")
-                    .foregroundColor(isFavorite ? .red : .white) // Set the color based on favorite state
-                    .font(.system(size: 24)) // Adjust the size of the heart icon
+                Image(systemName: favorites.isFavorite(watch) ? "heart.fill" : "heart")
+                    .foregroundColor(favorites.isFavorite(watch) ? .red : .white)
+                    .font(.system(size: 24))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-
         }
         .padding()
         .background(Color.gray)
         .cornerRadius(3)
-        .frame(width: 300, height: 600) // Set a fixed size for the entire cell
+        .frame(width: 300, height: 600)
         .shadow(radius: 5)
-        
     }
 }
 
-
-
 struct MarketView: View {
     let columns: [GridItem] = Array(repeating: .init(.flexible()), count: 2)
-    @State private var scrollToTop: Bool = false // Add a state to trigger scrolling
+    @StateObject private var favorites = WatchFavorites()
+    @State private var scrollToTop = false
+    @State private var showFavoritesSheet = false // Add this line
     
     var body: some View {
         ZStack {
             Color.gray.opacity(0.1)
             
             VStack(spacing: 0) {
-                Color.blue // Top fixed bar
-                    .frame(height: 20) // Adjust the height as needed
+                Color.blue.frame(height: 20)
                 
                 ScrollViewReader { scrollViewProxy in
                     ScrollView {
-                        LazyVGrid(columns: columns, spacing: 125 ) {
+                        LazyVGrid(columns: columns, spacing: 125) {
                             ForEach(watches) { watch in
-                                WatchCell(watch: watch)
-                                    .id(watch.id) // Assign an ID to each cell
+                                WatchCell(favorites: favorites, watch: watch)
+                                    .id(watch.id)
                             }
                         }
                         .padding()
@@ -90,7 +104,7 @@ struct MarketView: View {
                                 withAnimation {
                                     scrollViewProxy.scrollTo(watches.first?.id, anchor: .top)
                                 }
-                                scrollToTop.toggle() // Reset the state to false
+                                scrollToTop.toggle()
                             }
                         }
                     }
@@ -99,7 +113,7 @@ struct MarketView: View {
                 HStack(spacing: 0) {
                     Button(action: {
                         withAnimation {
-                            scrollToTop.toggle() // Toggle the state to trigger scrolling
+                            scrollToTop.toggle()
                         }
                     }) {
                         Text("Market")
@@ -108,18 +122,90 @@ struct MarketView: View {
                             .background(Color.blue)
                     }
                     
-                    NavigationLink(destination: FavoritesView()) {
+                    Spacer() // Add a spacer to push the Favorites button to the right
+                    
+                    Button(action: {
+                        showFavoritesSheet.toggle() // Toggle the sheet presentation
+                    }) {
                         Text("Favorites")
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .background(Color.blue)
                     }
                 }
-                .frame(height: 40) // Adjust the height as needed
+                .frame(height: 40)
             }
+            .navigationTitle("Watch Market")
+        }
+        .sheet(isPresented: $showFavoritesSheet) {
+            FavoritesListView(favorites: favorites) // Present the FavoritesListView sheet
+        }
+    }
+}
+struct FavoritesListView: View {
+    @ObservedObject var favorites: WatchFavorites
+    
+    var body: some View {
+        if favorites.favorites.isEmpty {
+            Text("You do not have favorite watches")
+                .font(.headline)
+                .foregroundColor(.gray)
+        } else {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 125) {
+                    ForEach(watches) { watch in
+                        if favorites.isFavorite(watch) {
+                            WatchCell(favorites: favorites, watch: watch)
+                                .id(watch.id)
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+    }
+    
+    let columns: [GridItem] = Array(repeating: .init(.flexible()), count: 2)
+}
+
+
+struct FavoritesView: View {
+    @ObservedObject var favorites: WatchFavorites
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 125) {
+                    ForEach(watches) { watch in
+                        if favorites.isFavorite(watch) {
+                            WatchCell(favorites: favorites, watch: watch)
+                                .id(watch.id)
+                        }
+                    }
+                    
+                    if favorites.favorites.isEmpty {
+                        Text("You do not have favorite watches")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Favorites")
+        }
+    }
+    
+    let columns: [GridItem] = Array(repeating: .init(.flexible()), count: 2)
+}
+
+struct ContentView: View {
+    var body: some View {
+        NavigationView {
+            MarketView()
         }
     }
 }
 
-    
+
 
