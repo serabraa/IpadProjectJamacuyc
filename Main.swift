@@ -28,7 +28,7 @@ struct Watch: Identifiable {
 let watches: [Watch] = [
     Watch(imageName: "watchTest", name: "Elegant Timepiece", price: 249.99),
     Watch(imageName: "watchTest", name: "Sporty Chrono", price: 189.99),
-    Watch(imageName: "watch3", name: "Classic Leather", price: 299.99),
+    Watch(imageName: "watcheron", name: "Classic Leather", price: 299.99),
     Watch(imageName: nil, name: "Empty Box", price: 0),
     Watch(imageName: "nonExistentImage", name: "Image Not Found", price: 0),
     // Add more watches here
@@ -39,42 +39,45 @@ struct WatchCell: View {
     let watch: Watch
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 5) {
             if let imageName = watch.imageName,
                let image = UIImage(named: imageName) {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100)
+                    .frame(maxHeight: .infinity) // Adjust the image aspect ratio
             } else {
                 Color.clear
-                    .frame(width: 100, height: 100)
+                    .frame(maxHeight: .infinity) // Adjust the image aspect ratio
             }
             
             Text(watch.name)
                 .font(.headline)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(height: 50)
-                .layoutPriority(1)
+                .foregroundColor(Color.white)
+               
             
             Text("$\(watch.price, specifier: "%.2f")")
                 .font(.subheadline)
+                .foregroundColor(Color.white)
+            
+            Spacer() // Add spacer to push the button to the bottom
             
             Button(action: {
                 favorites.toggleFavorite(watch)
             }) {
                 Image(systemName: favorites.isFavorite(watch) ? "heart.fill" : "heart")
-                    .foregroundColor(favorites.isFavorite(watch) ? .red : .white)
+                    .foregroundColor(favorites.isFavorite(watch) ? .white : .white)
                     .font(.system(size: 24))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding()
-        .background(Color.gray)
+        .background(Color(hex: "526D82"))
         .cornerRadius(3)
-        .frame(width: 300, height: 600)
         .shadow(radius: 5)
+        .frame(maxWidth: .infinity) // Allow the cell to expand to fill available space
     }
 }
 struct BottomBar: View {
@@ -99,7 +102,7 @@ struct BottomBar: View {
             Text("Market")
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
+                .background(Color(hex:"27374D"))
         }
     }
     
@@ -110,7 +113,7 @@ struct BottomBar: View {
             Text("Favorites")
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
+                .background(Color(hex: "27374D"))
         }
     }
 }

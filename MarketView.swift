@@ -12,7 +12,7 @@ struct MarketView: View {
     
     var body: some View {
         ZStack {
-            Color.gray.opacity(0.1)
+            Color(hex:"#9DB2BF")
             
             VStack(spacing: 0) {
                 topBar
@@ -28,12 +28,14 @@ struct MarketView: View {
     
     private var topBar: some View {
         VStack(spacing: 0) {
-            Color.blue.frame(height: 20)
+            Color(hex: "#27374D").frame( height:40)
             
             HStack {
+                
                 TextField("Search by name", text: $searchText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
+            
             }
         }
     }
@@ -42,7 +44,7 @@ struct MarketView: View {
         ScrollViewReader { scrollViewProxy in
             ScrollView {
                 
-                LazyVGrid(columns: columns, spacing: 125) {
+                LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(filteredWatches) { watch in
                         WatchCell(favorites: favorites, watch: watch)
                             .id(watch.id)
@@ -77,6 +79,8 @@ struct MarketView: View {
             Spacer()
             favoritesButton
         }
+        .frame(height: 40)
+        .background(Color(hex: "9DB2BF")) // Set the background color for the containing HStack
     }
     
     private var marketButton: some View {
@@ -88,7 +92,6 @@ struct MarketView: View {
             Text("Market")
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
         }
     }
     
@@ -99,7 +102,7 @@ struct MarketView: View {
             Text("Favorites")
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
         }
     }
+
 }
